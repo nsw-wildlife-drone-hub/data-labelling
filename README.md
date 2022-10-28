@@ -46,7 +46,7 @@ extract_frames.exe [Video File] [Frame Folder]
 I will modify this so that not only the images are extracted, but also a full definition video
 
 ### 5. Compress labels
-1. WinRAR the folder. Right-click ->WinRAR->Add to archive..
+1. Zip the folder using 7-zip
 
 2. Change Compression method to ‘Best’
 
