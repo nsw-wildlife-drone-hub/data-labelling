@@ -18,10 +18,10 @@ Download the data from where the data is. Yet to be properly determined. For now
 3. Maximize the window panel (this will give fine control of the mouse)
 4. Scroll to when the Koala first appears
 5. Create a label
->Left-click: draw a box
-Shift+Right-click: delete box
-Shift+Left-click: adjust box
-Enter: predict next box
+  - Left-click: draw a box
+  - Shift+Right-click: delete box
+  - Shift+Left-click: adjust box
+  - Enter: predict next box
 6. Save your Ground-truths (GT) by clicking 'GT Save As'
 
 #### 3.1 Good vs bad labels
@@ -38,9 +38,11 @@ Enter: predict next box
 3. Use either the .exe or .py:
 ```bash
 extract_frames.exe [Video File] [Frame Folder]
+# [Video File]: 20210607_DJI_0020.MP4
+# [Frame Folder]: 20210607_DJI_0020
 ```
->[Video File]: 	20210607_DJI_0020.MP4
->[Frame Folder]: 20210607_DJI_0020
+
+
 
 ***Work in progress***
 I will modify this so that not only the images are extracted, but also a full definition video
