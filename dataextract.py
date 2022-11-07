@@ -126,7 +126,7 @@ class DataExtractor:
             count += 1
             self.image_queue.put(img)
             self.video_queue.put(img)
-            self.video_gt_queue.put(img)
+            self.video_gt_queue.put(img.copy())
 
         cap.release()
         return None
