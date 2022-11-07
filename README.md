@@ -42,22 +42,31 @@ extract_frames.exe [Video File] [Frame Folder]
 # [Frame Folder]: 20210607_DJI_0020
 ```
 
-
-
 ***Work in progress***
 I will modify this so that not only the images are extracted, but also a full definition video
 
 ### 5. Compress labels
 1. WinRAR the folder. Right-click ->WinRAR->Add to archive..
 
-2. Change Compression method to ‘Best’
+2. Change Compression method to '.zip'’
+
 
 ### 6. Upload data
 
 1. Upload the compressed folder to the **Data/** folder in Gdrive
 
-2. Upload the _gt.mp4 data to the **Review/** folder in Gdrive
+2. Upload the output_gt.mp4 data to the **Review_AI/** folder in Gdrive
 
-3. Upload the _clip.mp4 data to the **Clip/** folder in Gdrive
+3. Upload the output.mp4 data to the **Review_Pilot** folder in Gdrive
 
-4. Upload the metadata.yaml to the **Metadata/** folder in Gdrive
+## Packaging .py into .exe
+
+Run the following commands to convert the python file into a packaged executable.
+
+```bash
+python -m venv pyinstall
+.\pyinstall\Scripts\activate
+pip install -r requirements.txt
+pyinstaller --onefile dataextract.py
+mv dist\dataextract.exe dataextract.exe -force
+```

@@ -10,15 +10,16 @@ from queue import Queue
 from glob import glob
 
 # Default config
-CAP_PROP_FRAME_WIDTH = 3
-CAP_PROP_FRAME_HEIGHT = 4
-CAP_PROP_FPS = 5
-SET_NAME = 'drone_classes'
-VID_REGEX = '*DJI*'
-VIDEO_SUFFIX = '*.MP4'
-IMG_SUFFIX = '.jpg'
-OUTPUT_SUFFIX = '.mp4'
-OUTPUT_GT_SUFFIX = '_gt.mp4'
+default_config = {"CAP_PROP_FRAME_WIDTH": 3,
+          "CAP_PROP_FRAME_HEIGHT": 4,
+          "CAP_PROP_FPS": 5,
+          "SET_NAME": 'drone_classes',
+          "VID_REGEX": '*DJI*',
+          "VIDEO_SUFFIX": '*.MP4',
+          "IMG_SUFFIX": '.jpg',
+          "OUTPUT_SUFFIX": '_output.mp4',
+          "OUTPUT_GT_SUFFIX": '_output_gt.mp4',
+          }
 
 def load_yaml(file_path, folder=None):
     if file_path in os.listdir():
@@ -28,7 +29,7 @@ def load_yaml(file_path, folder=None):
         with open(os.path.join(folder, file_path), 'r') as f:
             yaml_contents = yaml.safe_load(f)
     else:
-        raise FileNotFoundError(f'{file_path} file not found.')
+        raise FileNotFoundError(f'{file_path} file not found. Please make sure that {file_path} is present in the DarkLabel folder and up to date. This can be downloaded from the GitHub repository.')
     return yaml_contents
 
 def has_ext(folder, extension='.txt'):
@@ -94,10 +95,26 @@ class DataExtractor:
         return int(name)
 
     def write_images(self):
-        for frame in self.frame_list:
+        for f_idx in self.frame_list:
             img = self.image_queue.get(timeout=3)
-            img_name = os.path.join(self.folder, str(frame).zfill(8))+IMG_SUFFIX
+            img_name = os.path.join(self.folder, str(f_idx).zfill(8))+IMG_SUFFIX
             imwrite(img_name, img)
+        return None
+
+    def read_frames(self):
+        cap = VideoCapture(self.video_file)
+        count = 0
+        for frame in tqdm(self.frame_list):
+            if frame != count:
+                cap.set(1, frame)
+                count = frame
+            img = cap.read()[1]
+            count += 1
+            self.image_queue.put(img)
+            self.video_queue.put(img.copy())
+            self.video_gt_queue.put(img.copy())
+
+        cap.release()
         return None
 
     def read_bbox(self, file_name):
@@ -115,32 +132,16 @@ class DataExtractor:
         ymax = int(round((y + h / 2) * self.frame_height))
         return c, (xmin, ymin), (xmax, ymax)
 
-    def read_frames(self):
-        cap = VideoCapture(self.video_file)
-        count = 0
-        for frame in tqdm(self.frame_list):
-            if frame != count:
-                cap.set(1, frame)
-                count = frame
-            img = cap.read()[1]
-            count += 1
-            self.image_queue.put(img)
-            self.video_queue.put(img)
-            self.video_gt_queue.put(img)
-
-        cap.release()
-        return None
-
-    def add_gt(self, frame, idx):
+    def add_gt(self, target_frame, idx):
         bbox_list = self.bbox_list[idx]
         for bbox in bbox_list:
             c, xy1, xy2 = self.convert_bbox(bbox)
             label_class = self.class_list[c]
             white = (255, 255, 255)
             pos = (xy1[0], xy1[1] - 5)
-            rectangle(frame, xy1, xy2, white, 2)
-            putText(frame, label_class, pos, 0, 0.5, white, 2)
-        return frame
+            rectangle(target_frame, xy1, xy2, white, 2)
+            putText(target_frame, label_class, pos, 0, 0.5, white, 2)
+        return target_frame
 
     def write_video(self, output_name, gt=False):
         frame_dims = (self.frame_width, self.frame_height)
@@ -149,11 +150,12 @@ class DataExtractor:
 
         for frame_idx in range(len(self.frame_list)):
             if gt is True:
-                frame = self.video_gt_queue.get(timeout=3)
-                frame = self.add_gt(frame, frame_idx)
+                vid_frame = self.video_gt_queue.get(timeout=3)
+                gt_frame = self.add_gt(vid_frame, frame_idx)
+                video.write(gt_frame)
             else:
-                frame = self.video_queue.get(timeout=3)
-            video.write(frame)
+                vid_frame = self.video_queue.get(timeout=3)
+                video.write(vid_frame)
 
         video.release()
         return None
@@ -176,17 +178,19 @@ class DataExtractor:
         return None
 
 if __name__ == "__main__":
+    print('Starting dataextract...')
     try:
         config = load_yaml('config.yaml')
         globals().update(config)
     except FileNotFoundError:
         print('Unable to find config.yaml. Continuing with default config.')
+        globals().update(default_config)
 
+    print('Searching for data...')
     label_dict = search_data()
-
     if len(label_dict):
         response = input(f"Would you like to extract data for the above {len(label_dict)} datasets? (Y/N)")
-        if response in ['Y', 'y', 'yes', 'Yes']:
+        if response in ['Y', 'y', 'yes', 'Yes', '']:
             for label_path in label_dict:
                 video_path = label_dict[label_path]
                 dataset_name = PurePath(label_path).name
