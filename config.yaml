@@ -1,9 +1,9 @@
 CAP_PROP_FRAME_WIDTH: 3
 CAP_PROP_FRAME_HEIGHT: 4
 CAP_PROP_FPS: 5
-SET_NAME: 'drone_classes'
 VID_REGEX: '*DJI*'
 VIDEO_SUFFIX: '*.MP4'
 IMG_SUFFIX: '.jpg'
 OUTPUT_SUFFIX: '_output.mp4'
 OUTPUT_GT_SUFFIX: '_output_gt.mp4'
+DRONE_CLASSES: ["koala", "glider", "bird", "macropod", "pig", "deer", "rabbit", "bandicoot", "horse", "fox"]

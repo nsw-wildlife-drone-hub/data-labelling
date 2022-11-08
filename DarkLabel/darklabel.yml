@@ -1,3 +1,5 @@
+%YAML:1.0
+---
 ## Default Settings
 media_path_root: "H:\\darklabel_test\\media"          # if specified, image/video files are opened in this folder by default
 gt_path_root: "H:\\darklabel_test\\gt"          # if specified, gt files are loaded and saved in $gt_path_root\ by default
@@ -6,7 +8,7 @@ gt_file_ext: "xml"              # default gt save file format (supported formats
 gt_merged: 0                  # 0: save gt as separate file for each image, 1: save gt in one file
 delimiter: ","                   # separating delimiter of gt datum (it's effective only when gt is saved in txt)
 database_name: "Unknown"        # it is used when saving gt data in xml format: <database>database_name</database>
-classes_set: "my_classes1"   # predefined classes set (tag name of classes set)
+classes_set: "drone_classes"   # predefined classes set (tag name of classes set)
 
 ## Predefined Classes Sets (you can define and add your own classes set here)
 drone_classes: ["koala", "glider", "bird", "macropod", "pig", "deer", "rabbit", "bandicoot", "horse", "fox"]
@@ -16,7 +18,7 @@ voc_classes: ["koala", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat",
 ## GUI Settings (you can also enter double quoted virtual key code for hotkeys: e.g. "32" for spacebar)
 pg_step_size: 30         # navigation step size when PgUp and PgDn key is pressed
 min_object_size: 10     # minimum box/object size to be allowed (in pixels)
-box_line_width: 2       # line width of bounding boxes
+box_line_width: 1       # line width of bounding boxes
 box_color: [0,255,0]     # default box color: [b, g, r] (for boxes that have no ID)
 highlight_width: 2      # line width of highlighted bounding box boundaries
 cross_width: 1           # width of cross line indicating mouse position

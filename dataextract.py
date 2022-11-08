@@ -13,20 +13,17 @@ from glob import glob
 default_config = {"CAP_PROP_FRAME_WIDTH": 3,
           "CAP_PROP_FRAME_HEIGHT": 4,
           "CAP_PROP_FPS": 5,
-          "SET_NAME": 'drone_classes',
           "VID_REGEX": '*DJI*',
           "VIDEO_SUFFIX": '*.MP4',
           "IMG_SUFFIX": '.jpg',
           "OUTPUT_SUFFIX": '_output.mp4',
           "OUTPUT_GT_SUFFIX": '_output_gt.mp4',
-          }
+          "DRONE_CLASSES": ["koala", "glider", "bird", "macropod", "pig", "deer", "rabbit", "bandicoot", "horse", "fox"]
+           }
 
 def load_yaml(file_path, folder=None):
     if file_path in os.listdir():
         with open(file_path, 'r') as f:
-            yaml_contents = yaml.safe_load(f)
-    elif file_path in os.listdir(folder) and folder:
-        with open(os.path.join(folder, file_path), 'r') as f:
             yaml_contents = yaml.safe_load(f)
     else:
         raise FileNotFoundError(f'{file_path} file not found. Please make sure that {file_path} is present in the DarkLabel folder and up to date. This can be downloaded from the GitHub repository.')
@@ -81,8 +78,7 @@ class DataExtractor:
         frame_list = [self.basename(frame) for frame in os.listdir(self.folder) if frame.endswith('.txt')]
         self.frame_list = sorted(frame_list)
         self.bbox_list = [self.read_bbox(bbox) for bbox in self.frame_list]
-        classes = load_yaml('darklabel.yml', 'DarkLabel')
-        self.class_list = classes[SET_NAME]
+        self.class_list = DRONE_CLASSES
 
         cap = VideoCapture(self.video_file)
         self.frame_width = int(cap.get(CAP_PROP_FRAME_WIDTH))

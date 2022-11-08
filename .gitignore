@@ -1,7 +1,5 @@
 *.mp4
-Data/*
 pyinstall/
-
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
