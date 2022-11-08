@@ -50,9 +50,7 @@ Each time a labelling process is completed, there will be a dataset found to ext
 
 ### 4. Compress labels
 *(Option A)*
-1. WinRAR the labels+images folder. Right-click ->WinRAR->Add to archive..
-
-2. Change Compression method to '.zip'’
+1. Zip the folder using 7-zip
 
 *(Option B)*
 1. Right-click the labels+images folder
