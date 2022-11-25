@@ -28,6 +28,7 @@ To begin creating labels:
   - Left-click: draw a box
   - Shift+Right-click: delete box
   - Shift+Left-click: adjust box
+  - Ctrl+Scroll: zoom in/out
   - Enter: predict next box
 6. Save your Ground-truths (GT) by clicking 'GT Save As' and save in the new folder that was created
 
