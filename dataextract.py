@@ -22,6 +22,7 @@ default_config = {"CAP_PROP_FRAME_WIDTH": 3,
            }
 
 def load_yaml(file_path, folder=None):
+    # check if the file exists in the target folder
     if file_path in os.listdir():
         with open(file_path, 'r') as f:
             yaml_contents = yaml.safe_load(f)
@@ -30,10 +31,12 @@ def load_yaml(file_path, folder=None):
     return yaml_contents
 
 def has_ext(folder, extension='.txt'):
+    # check if there is a file ending with the extenion in a folder
     ext_set = set(os.path.splitext(file)[1] for file in os.listdir(folder))
     return extension in ext_set
 
 def print_fol_status(label_list, status_msg=''):
+    # print information about a list in a concise way
     print(len(label_list), status_msg)
     print(*label_list, sep="\n")
     print()
@@ -60,26 +63,36 @@ def search_data():
         fol_name = PurePath(fol).name
         if fol_name in name_dict:
             label_dict[fol] = name_dict[fol_name]
+          
+    # create print information
     label_list = [fol+' <- '+label_dict[fol] for fol in label_dict]
     print_fol_status(label_list, "found with matching video data.")
     return label_dict
 
 class DataExtractor:
+    # class to automate the extraction of images and labels based
+    # on the labels in a target folder of the same name
     def __init__(self, video_file, folder, dataset_name):
+        # video_file:   target video file
+        # folder:       target folder of the same name
+        # dataset_name: output dataset name
         self.video_file = video_file
         self.folder = folder
         self.video_name = dataset_name + OUTPUT_SUFFIX
         self.video_gt_name = dataset_name + OUTPUT_GT_SUFFIX
 
+        # initialize queue
         self.image_queue = Queue(maxsize=1)
         self.video_queue = Queue(maxsize=1)
         self.video_gt_queue = Queue(maxsize=1)
 
+        # comprehend list of frame indexes from label texts
         frame_list = [self.basename(frame) for frame in os.listdir(self.folder) if frame.endswith('.txt')]
         self.frame_list = sorted(frame_list)
         self.bbox_list = [self.read_bbox(bbox) for bbox in self.frame_list]
         self.class_list = DRONE_CLASSES
 
+        # initialize video stream
         cap = VideoCapture(self.video_file)
         self.frame_width = int(cap.get(CAP_PROP_FRAME_WIDTH))
         self.frame_height = int(cap.get(CAP_PROP_FRAME_HEIGHT))
@@ -87,10 +100,12 @@ class DataExtractor:
         cap.release()
 
     def basename(self, name):
+        # convert file basename to integer
         name = os.path.splitext(name)[0]
         return int(name)
 
     def write_images(self):
+        # convert frames from frame_list to images
         for f_idx in self.frame_list:
             img = self.image_queue.get(timeout=3)
             img_name = os.path.join(self.folder, str(f_idx).zfill(8))+IMG_SUFFIX
@@ -98,29 +113,40 @@ class DataExtractor:
         return None
 
     def read_frames(self):
+        # begin reading video information from target video
         cap = VideoCapture(self.video_file)
         count = 0
+        
+        # check if the current frame is the next frame to convert
+        # otherwise, skip to the next frame to convert
         for frame in tqdm(self.frame_list):
             if frame != count:
                 cap.set(1, frame)
                 count = frame
             img = cap.read()[1]
             count += 1
+            
+            # add data to the queue
             self.image_queue.put(img)
             self.video_queue.put(img.copy())
             self.video_gt_queue.put(img.copy())
 
+        # end video stream
         cap.release()
         return None
 
     def read_bbox(self, file_name):
+        # read bbox information from text file
         text_file = str(file_name).zfill(8)+'.txt'
         with open(self.folder+'/'+text_file, "r") as f:
             contents = f.read()
+            
+        # convert to individual detections
         bbox_list = [bbox for bbox in contents.split("\n") if bbox]
         return bbox_list
 
     def convert_bbox(self, bbox):
+        # convert from YOLO to CV2 format
         c, x, y, w, h = map(eval, bbox.split(' '))
         xmin = int(round((x - w / 2) * self.frame_width))
         xmax = int(round((x + w / 2) * self.frame_width))
@@ -129,6 +155,7 @@ class DataExtractor:
         return c, (xmin, ymin), (xmax, ymax)
 
     def add_gt(self, target_frame, idx):
+        # use CV2 to add a groundtruth label to the image
         bbox_list = self.bbox_list[idx]
         for bbox in bbox_list:
             c, xy1, xy2 = self.convert_bbox(bbox)
@@ -140,11 +167,14 @@ class DataExtractor:
         return target_frame
 
     def write_video(self, output_name, gt=False):
+        # convert the sequence of frames into a video
         frame_dims = (self.frame_width, self.frame_height)
         codec = VideoWriter_fourcc(*"mp4v")
         video = VideoWriter(output_name, codec, self.fps, frame_dims)
-
+        
+        # iterate through each frame
         for frame_idx in range(len(self.frame_list)):
+            # add a groundtruth label to the image
             if gt is True:
                 vid_frame = self.video_gt_queue.get(timeout=3)
                 gt_frame = self.add_gt(vid_frame, frame_idx)
@@ -153,20 +183,24 @@ class DataExtractor:
                 vid_frame = self.video_queue.get(timeout=3)
                 video.write(vid_frame)
 
+        # end video stream
         video.release()
         return None
 
     def start_threads(self):
+        # initialize multithreading
         t1 = Thread(target=self.read_frames)
         t2 = Thread(target=self.write_images)
         t3 = Thread(target=self.write_video, args=[self.video_name])
         t4 = Thread(target=self.write_video, args=[self.video_gt_name, True])
 
+        # start threads
         t1.start()
         t2.start()
         t3.start()
         t4.start()
 
+        # join threads
         t1.join()
         t2.join()
         t3.join()
@@ -174,6 +208,8 @@ class DataExtractor:
         return None
 
 if __name__ == "__main__":
+    # try to find and load config yaml file
+    # otherwise load default parameters as global variables
     print('Starting dataextract...')
     try:
         config = load_yaml('config.yaml')
@@ -182,6 +218,7 @@ if __name__ == "__main__":
         print('Unable to find config.yaml. Continuing with default config.')
         globals().update(default_config)
 
+    # automatically search through directories to find data to extract
     print('Searching for data...')
     label_dict = search_data()
     if len(label_dict):
