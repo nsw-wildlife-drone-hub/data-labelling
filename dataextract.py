@@ -4,6 +4,7 @@ from pathlib import PurePath, Path
 from cv2 import rectangle, putText
 from cv2 import VideoCapture, imwrite
 from cv2 import VideoWriter, VideoWriter_fourcc
+from cv2 import cvtColor, COLOR_BGR2GRAY
 from tqdm import tqdm
 from threading import Thread
 from queue import Queue
@@ -92,7 +93,7 @@ class DataExtractor:
         self.bbox_list = [self.read_bbox(bbox) for bbox in self.frame_list]
         self.class_list = DRONE_CLASSES
 
-        # initialize video stream
+        # initialize video parameters
         cap = VideoCapture(self.video_file)
         self.frame_width = int(cap.get(CAP_PROP_FRAME_WIDTH))
         self.frame_height = int(cap.get(CAP_PROP_FRAME_HEIGHT))
@@ -125,6 +126,9 @@ class DataExtractor:
                 count = frame
             img = cap.read()[1]
             count += 1
+
+            # convert to grayscale
+            img = cvtColor(img, COLOR_BGR2GRAY)
             
             # add data to the queue
             self.image_queue.put(img)
@@ -170,7 +174,7 @@ class DataExtractor:
         # convert the sequence of frames into a video
         frame_dims = (self.frame_width, self.frame_height)
         codec = VideoWriter_fourcc(*"mp4v")
-        video = VideoWriter(output_name, codec, self.fps, frame_dims)
+        video = VideoWriter(output_name, codec, self.fps, frame_dims, 0)
         
         # iterate through each frame
         for frame_idx in range(len(self.frame_list)):
